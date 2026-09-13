@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'screens/triage_screen.dart';
+
 void main() {
   runApp(const CareLinkApp());
 }
@@ -153,10 +155,20 @@ class CareLinkHomePage extends StatelessWidget {
                       icon: Icons.health_and_safety,
                       title: 'AI Health Check',
                       onTap: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text(
-                              'AI Health Check coming next 🩺',
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => TriageScreen(
+                              onEmergencyTriggered: (triageContext) {
+                                Navigator.of(triageContext).pop();
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text(
+                                      'Triggering Emergency Autopilot... 🚨',
+                                    ),
+                                    backgroundColor: Colors.red,
+                                  ),
+                                );
+                              },
                             ),
                           ),
                         );
