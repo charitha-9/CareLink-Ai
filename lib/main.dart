@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 
+import 'screens/login_screen.dart';
+import 'screens/profile_screen.dart';
+import 'screens/signup_screen.dart';
+
 void main() {
   runApp(const CareLinkApp());
 }
@@ -18,7 +22,13 @@ class CareLinkApp extends StatelessWidget {
         ),
         useMaterial3: true,
       ),
-      home: const CareLinkHomePage(),
+      initialRoute: '/login',
+      routes: {
+        '/login': (context) => const LoginScreen(),
+        '/signup': (context) => const SignupScreen(),
+        '/profile': (context) => const ProfileScreen(),
+        '/home': (context) => const CareLinkHomePage(),
+      },
     );
   }
 }
@@ -38,6 +48,19 @@ class CareLinkHomePage extends StatelessWidget {
         ),
         backgroundColor: Colors.deepPurple,
         foregroundColor: Colors.white,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.account_circle),
+            tooltip: 'Student Profile',
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => const ProfileScreen(),
+                ),
+              );
+            },
+          ),
+        ],
       ),
 
       body: SafeArea(
