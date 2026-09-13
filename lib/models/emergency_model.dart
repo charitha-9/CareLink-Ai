@@ -97,4 +97,72 @@ class EmergencyModel {
           liveTrackingActive ?? this.liveTrackingActive,
     );
   }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'emergencyId': emergencyId,
+      'studentId': studentId,
+      'createdAt': createdAt.toIso8601String(),
+      'latitude': latitude,
+      'longitude': longitude,
+      'campusStatus': campusStatus.name,
+      'status': status.name,
+      'hostelBlock': hostelBlock,
+      'roomNumber': roomNumber,
+      'roommateNotified': roommateNotified,
+      'wardenNotified': wardenNotified,
+      'doctorNotified': doctorNotified,
+      'parentNotified': parentNotified,
+      'approvalFor112': approvalFor112,
+      'liveTrackingActive': liveTrackingActive,
+    };
+  }
+
+  factory EmergencyModel.fromMap(Map<String, dynamic> map, [String? docId]) {
+    DateTime parseDate(dynamic val) {
+      if (val is DateTime) return val;
+      if (val is String) {
+        return DateTime.tryParse(val) ?? DateTime.now();
+      }
+      try {
+        final dynamic timestamp = val;
+        if (timestamp != null && timestamp.toDate != null) {
+          return timestamp.toDate() as DateTime;
+        }
+      } catch (_) {}
+      return DateTime.now();
+    }
+
+    CampusStatus parseCampusStatus(String? name) {
+      for (final val in CampusStatus.values) {
+        if (val.name == name) return val;
+      }
+      return CampusStatus.unknown;
+    }
+
+    EmergencyStatus parseEmergencyStatus(String? name) {
+      for (final val in EmergencyStatus.values) {
+        if (val.name == name) return val;
+      }
+      return EmergencyStatus.idle;
+    }
+
+    return EmergencyModel(
+      emergencyId: docId ?? (map['emergencyId'] as String? ?? ''),
+      studentId: map['studentId'] as String? ?? '',
+      createdAt: parseDate(map['createdAt']),
+      latitude: (map['latitude'] as num?)?.toDouble(),
+      longitude: (map['longitude'] as num?)?.toDouble(),
+      campusStatus: parseCampusStatus(map['campusStatus'] as String?),
+      status: parseEmergencyStatus(map['status'] as String?),
+      hostelBlock: map['hostelBlock'] as String?,
+      roomNumber: map['roomNumber'] as String?,
+      roommateNotified: map['roommateNotified'] as bool? ?? false,
+      wardenNotified: map['wardenNotified'] as bool? ?? false,
+      doctorNotified: map['doctorNotified'] as bool? ?? false,
+      parentNotified: map['parentNotified'] as bool? ?? false,
+      approvalFor112: map['approvalFor112'] as bool? ?? false,
+      liveTrackingActive: map['liveTrackingActive'] as bool? ?? false,
+    );
+  }
 }
