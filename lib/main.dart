@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 
+import 'models/student_model.dart';
+import 'screens/emergency_screen.dart';
+
 void main() {
   runApp(const CareLinkApp());
 }
@@ -114,10 +117,23 @@ class CareLinkHomePage extends StatelessWidget {
                 height: 58,
                 child: ElevatedButton.icon(
                   onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text(
-                          'Emergency workflow coming next 🚨',
+                    const student = StudentModel(
+                      studentId: 'STU-2026-001',
+                      name: 'Charitha V',
+                      phoneNumber: '+91 98765 43210',
+                      campusId: 'amity_bengaluru',
+                      campusName: 'Amity University Bengaluru',
+                      hostelBlock: 'Block B',
+                      roomNumber: '304',
+                      roommate1Phone: '+91 98765 43211',
+                      wardenPhone: '+91 98765 43212',
+                      parentPhone: '+91 98765 43213',
+                    );
+
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (context) => const EmergencyScreen(
+                          student: student,
                         ),
                       ),
                     );
