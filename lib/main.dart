@@ -1,12 +1,9 @@
 import 'package:flutter/material.dart';
 
-<<<<<<< HEAD
 import 'screens/login_screen.dart';
 import 'screens/profile_screen.dart';
 import 'screens/signup_screen.dart';
-=======
 import 'screens/triage_screen.dart';
->>>>>>> origin/feature/ai-triage
 
 void main() {
   runApp(const CareLinkApp());

@@ -1,0 +1,83 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ------------------------------------------------------------
+    // Helper Functions
+    // ------------------------------------------------------------
+
+    // Verify if incoming request is from an authenticated user
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // Verify user ownership by matching path parameter with authenticated UID
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // Verify document ownership when read or deleted (checks studentId or userId)
+    function isResourceOwner() {
+      return isAuthenticated() && (
+        resource.data.studentId == request.auth.uid ||
+        resource.data.userId == request.auth.uid
+      );
+    }
+
+    // Verify document ownership when created or updated
+    function isRequestOwner() {
+      return isAuthenticated() && (
+        request.resource.data.studentId == request.auth.uid ||
+        request.resource.data.userId == request.auth.uid
+      );
+    }
+
+    // ------------------------------------------------------------
+    // Collection Rules
+    // ------------------------------------------------------------
+
+    // 1. User Profiles & Scoped Subcollections
+    // - Authenticated students can only read and write their own profile
+    // - Embedded emergency contacts and parent/guardian links are fully protected
+    match /users/{userId} {
+      allow read, write: if isOwner(userId);
+
+      // Recursive match for any subcollections under a user's document
+      // (e.g., /users/{userId}/emergency_contacts, /users/{userId}/emergency_events)
+      match /{subcollection=**} {
+        allow read, write: if isOwner(userId);
+      }
+    }
+
+    // 2. Active Emergency Events (Top-level collection)
+    // - A student can access and create only their own emergency events
+    match /emergency_events/{eventId} {
+      allow read, delete: if isResourceOwner();
+      allow create: if isRequestOwner();
+      allow update: if isResourceOwner() && isRequestOwner();
+    }
+
+    // 3. Emergency History & Past Logs (Top-level collection)
+    // - A student can access only their own emergency history records
+    match /emergency_history/{historyId} {
+      allow read, delete: if isResourceOwner();
+      allow create: if isRequestOwner();
+      allow update: if isResourceOwner() && isRequestOwner();
+    }
+
+    // 4. Emergency Contacts & Guardian Links (If stored in top-level collections)
+    // - Never publicly readable; accessible only by the student who owns them
+    match /emergency_contacts/{contactId} {
+      allow read, delete: if isResourceOwner();
+      allow create: if isRequestOwner();
+      allow update: if isResourceOwner() && isRequestOwner();
+    }
+
+    match /parent_guardian_links/{linkId} {
+      allow read, delete: if isResourceOwner();
+      allow create: if isRequestOwner();
+      allow update: if isResourceOwner() && isRequestOwner();
+    }
+  }
+}

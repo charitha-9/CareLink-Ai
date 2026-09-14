@@ -8,6 +8,8 @@ class StudentModel {
   final String hostel;
   final String block;
   final String room;
+  final String? _hostelBlock;
+  final String? _roomNumber;
 
   // Campus info (optional defaults for campus compatibility)
   final String campusId;
@@ -22,24 +24,35 @@ class StudentModel {
   final String? roommate2Phone;
   final String? wardenPhone;
 
+  // Account and notification fields
+  final String? fcmToken;
+
   const StudentModel({
     required this.studentId,
-    required this.name,
-    required this.phone,
-    required this.email,
-    required this.hostel,
-    required this.block,
-    required this.room,
-    required this.parentName,
-    required this.parentPhone,
+    this.name = '',
+    String? phone,
+    String? phoneNumber,
+    this.email = '',
+    this.hostel = '',
+    this.block = '',
+    this.room = '',
+    String? hostelBlock,
+    String? roomNumber,
+    this.campusId = 'CAMPUS-MAIN',
+    this.campusName = 'Main Campus',
+    this.parentName = '',
+    this.parentPhone = '',
     this.roommate1Name,
     this.roommate1Phone,
     this.roommate2Name,
     this.roommate2Phone,
     this.wardenPhone,
-    this.campusId = 'CAMPUS-MAIN',
-    this.campusName = 'Main Campus',
-  });
+    this.fcmToken,
+  })  : phone = phone ?? phoneNumber ?? '',
+        // ignore: prefer_initializing_formals
+        _hostelBlock = hostelBlock,
+        // ignore: prefer_initializing_formals
+        _roomNumber = roomNumber;
 
   // ------------------------------------------------------------
   // BACKWARD COMPATIBILITY GETTERS (for teammate modules like EmergencyService)
@@ -49,10 +62,19 @@ class StudentModel {
   String get phoneNumber => phone;
 
   /// Compatibility getter for teammate modules expecting `roomNumber`
-  String get roomNumber => room;
+  String get roomNumber => _roomNumber ?? room;
 
   /// Compatibility getter for teammate modules expecting `hostelBlock`
-  String get hostelBlock => block.isNotEmpty ? '$hostel - Block $block' : hostel;
+  String get hostelBlock {
+    final explicit = _hostelBlock;
+    if (explicit != null && explicit.isNotEmpty) {
+      return explicit;
+    }
+    if (block.isNotEmpty) {
+      return hostel.isNotEmpty ? '$hostel - Block $block' : 'Block $block';
+    }
+    return hostel;
+  }
 
   // ------------------------------------------------------------
   // COPY WITH
@@ -62,10 +84,13 @@ class StudentModel {
     String? studentId,
     String? name,
     String? phone,
+    String? phoneNumber,
     String? email,
     String? hostel,
     String? block,
     String? room,
+    String? hostelBlock,
+    String? roomNumber,
     String? campusId,
     String? campusName,
     String? parentName,
@@ -75,15 +100,18 @@ class StudentModel {
     String? roommate2Name,
     String? roommate2Phone,
     String? wardenPhone,
+    String? fcmToken,
   }) {
     return StudentModel(
       studentId: studentId ?? this.studentId,
       name: name ?? this.name,
-      phone: phone ?? this.phone,
+      phone: phone ?? phoneNumber ?? this.phone,
       email: email ?? this.email,
       hostel: hostel ?? this.hostel,
       block: block ?? this.block,
       room: room ?? this.room,
+      hostelBlock: hostelBlock ?? _hostelBlock,
+      roomNumber: roomNumber ?? _roomNumber,
       campusId: campusId ?? this.campusId,
       campusName: campusName ?? this.campusName,
       parentName: parentName ?? this.parentName,
@@ -93,6 +121,7 @@ class StudentModel {
       roommate2Name: roommate2Name ?? this.roommate2Name,
       roommate2Phone: roommate2Phone ?? this.roommate2Phone,
       wardenPhone: wardenPhone ?? this.wardenPhone,
+      fcmToken: fcmToken ?? this.fcmToken,
     );
   }
 
@@ -105,10 +134,13 @@ class StudentModel {
       'studentId': studentId,
       'name': name,
       'phone': phone,
+      'phoneNumber': phoneNumber,
       'email': email,
       'hostel': hostel,
       'block': block,
       'room': room,
+      'hostelBlock': hostelBlock,
+      'roomNumber': roomNumber,
       'campusId': campusId,
       'campusName': campusName,
       'parentName': parentName,
@@ -118,18 +150,27 @@ class StudentModel {
       'roommate2Name': roommate2Name,
       'roommate2Phone': roommate2Phone,
       'wardenPhone': wardenPhone,
+      'fcmToken': fcmToken,
     };
   }
 
-  factory StudentModel.fromMap(Map<String, dynamic> map) {
+  factory StudentModel.fromMap(Map<String, dynamic> map, [String? docId]) {
+    final rawHostel = map['hostel'] as String? ?? '';
+    final rawBlock = map['block'] as String? ?? '';
+    final rawRoom = (map['room'] ?? map['roomNumber']) as String? ?? '';
+    final rawHostelBlock = map['hostelBlock'] as String?;
+    final rawRoomNumber = map['roomNumber'] as String?;
+
     return StudentModel(
-      studentId: map['studentId'] as String? ?? '',
+      studentId: docId ?? (map['studentId'] as String? ?? ''),
       name: map['name'] as String? ?? '',
       phone: (map['phone'] ?? map['phoneNumber']) as String? ?? '',
       email: map['email'] as String? ?? '',
-      hostel: map['hostel'] as String? ?? '',
-      block: (map['block'] ?? map['hostelBlock']) as String? ?? '',
-      room: (map['room'] ?? map['roomNumber']) as String? ?? '',
+      hostel: rawHostel,
+      block: rawBlock,
+      room: rawRoom,
+      hostelBlock: rawHostelBlock,
+      roomNumber: rawRoomNumber,
       campusId: map['campusId'] as String? ?? 'CAMPUS-MAIN',
       campusName: map['campusName'] as String? ?? 'Main Campus',
       parentName: map['parentName'] as String? ?? '',
@@ -139,12 +180,13 @@ class StudentModel {
       roommate2Name: map['roommate2Name'] as String?,
       roommate2Phone: map['roommate2Phone'] as String?,
       wardenPhone: map['wardenPhone'] as String?,
+      fcmToken: map['fcmToken'] as String?,
     );
   }
 
   @override
   String toString() {
-    return 'StudentModel(studentId: $studentId, name: $name, phone: $phone, email: $email, hostel: $hostel, block: $block, room: $room)';
+    return 'StudentModel(studentId: $studentId, name: $name, phone: $phone, email: $email, hostel: $hostel, block: $block, room: $room, campusId: $campusId, fcmToken: $fcmToken)';
   }
 
   @override
@@ -167,12 +209,13 @@ class StudentModel {
         other.roommate1Phone == roommate1Phone &&
         other.roommate2Name == roommate2Name &&
         other.roommate2Phone == roommate2Phone &&
-        other.wardenPhone == wardenPhone;
+        other.wardenPhone == wardenPhone &&
+        other.fcmToken == fcmToken;
   }
 
   @override
   int get hashCode {
-    return Object.hash(
+    return Object.hashAll([
       studentId,
       name,
       phone,
@@ -189,6 +232,7 @@ class StudentModel {
       roommate2Name,
       roommate2Phone,
       wardenPhone,
-    );
+      fcmToken,
+    ]);
   }
 }
